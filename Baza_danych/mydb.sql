@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: 22 Maj 2014, 07:41
+-- Generation Time: 22 Maj 2014, 23:33
 -- Server version: 5.6.16
 -- PHP Version: 5.5.11
 
@@ -28,16 +28,36 @@ SET time_zone = "+00:00";
 
 CREATE TABLE IF NOT EXISTS `artysta` (
   `idArtysty` int(11) NOT NULL,
-  `Nazwa_zespolu` varchar(45) DEFAULT NULL,
+  `Nazwa` varchar(45) NOT NULL,
   `Imie` varchar(45) DEFAULT NULL,
   `Nazwisko` varchar(45) DEFAULT NULL,
-  `id_ranga` varchar(45) DEFAULT NULL,
-  `id_zespol_typ` varchar(45) DEFAULT NULL,
-  `id_zespol_podtyp` varchar(45) DEFAULT NULL,
+  `id_ranga` int(11) NOT NULL,
+  `id_zespol_typ` int(11) NOT NULL,
+  `id_zespol_podtyp` int(11) NOT NULL,
   `menedzer` varchar(45) DEFAULT NULL,
-  `dane_kontaktowe` varchar(45) DEFAULT NULL,
-  `opis` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`idArtysty`)
+  `telefon` varchar(45) DEFAULT NULL,
+  `email` varchar(45) DEFAULT NULL,
+  `opis` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`idArtysty`),
+  UNIQUE KEY `Nazwa_UNIQUE` (`Nazwa`),
+  UNIQUE KEY `idArtysty_UNIQUE` (`idArtysty`),
+  KEY `fk_Artysta_Artysta_typ1_idx` (`id_zespol_typ`),
+  KEY `fk_Artysta_Artysta_podtyp1_idx` (`id_zespol_podtyp`),
+  KEY `fk_Artysta_Artysta_ranga1_idx` (`id_ranga`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Struktura tabeli dla tabeli `artysta_has_wydarzenia`
+--
+
+CREATE TABLE IF NOT EXISTS `artysta_has_wydarzenia` (
+  `Artysta_idArtysty` int(11) NOT NULL,
+  `Wydarzenia_idWydarzenia` int(11) NOT NULL,
+  PRIMARY KEY (`Artysta_idArtysty`,`Wydarzenia_idWydarzenia`),
+  KEY `fk_Artysta_has_Wydarzenia_Wydarzenia1_idx` (`Wydarzenia_idWydarzenia`),
+  KEY `fk_Artysta_has_Wydarzenia_Artysta1_idx` (`Artysta_idArtysty`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -48,8 +68,10 @@ CREATE TABLE IF NOT EXISTS `artysta` (
 
 CREATE TABLE IF NOT EXISTS `artysta_podtyp` (
   `idArtysta_podtyp` int(11) NOT NULL AUTO_INCREMENT,
-  `podtyp` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`idArtysta_podtyp`)
+  `podtyp` varchar(45) NOT NULL,
+  PRIMARY KEY (`idArtysta_podtyp`),
+  UNIQUE KEY `podtyp_UNIQUE` (`podtyp`),
+  UNIQUE KEY `idArtysta_podtyp_UNIQUE` (`idArtysta_podtyp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -60,8 +82,10 @@ CREATE TABLE IF NOT EXISTS `artysta_podtyp` (
 
 CREATE TABLE IF NOT EXISTS `artysta_ranga` (
   `idArtysta_wielkosc` int(11) NOT NULL AUTO_INCREMENT,
-  `cena_do` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`idArtysta_wielkosc`)
+  `cena_do` varchar(45) NOT NULL,
+  PRIMARY KEY (`idArtysta_wielkosc`),
+  UNIQUE KEY `cena_do_UNIQUE` (`cena_do`),
+  UNIQUE KEY `idArtysta_wielkosc_UNIQUE` (`idArtysta_wielkosc`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -72,8 +96,10 @@ CREATE TABLE IF NOT EXISTS `artysta_ranga` (
 
 CREATE TABLE IF NOT EXISTS `artysta_typ` (
   `idArtysta_typ` int(11) NOT NULL AUTO_INCREMENT,
-  `typ` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`idArtysta_typ`)
+  `typ` varchar(45) NOT NULL,
+  PRIMARY KEY (`idArtysta_typ`),
+  UNIQUE KEY `typ_UNIQUE` (`typ`),
+  UNIQUE KEY `idArtysta_typ_UNIQUE` (`idArtysta_typ`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -84,19 +110,21 @@ CREATE TABLE IF NOT EXISTS `artysta_typ` (
 
 CREATE TABLE IF NOT EXISTS `bilety` (
   `idBilet` int(11) NOT NULL AUTO_INCREMENT,
-  `id_klient` varchar(45) NOT NULL,
-  `id_wydarzenia` varchar(45) NOT NULL,
-  `id_cena` varchar(45) NOT NULL,
-  `data_zakupu` varchar(45) DEFAULT NULL,
-  `nr_miejsca` varchar(45) NOT NULL,
-  `typ_miesca` varchar(45) DEFAULT NULL,
+  `id_klient` int(11) NOT NULL,
+  `id_wydarzenia` int(11) NOT NULL,
+  `id_cena` int(11) NOT NULL,
+  `data_zakupu` timestamp NULL DEFAULT NULL,
+  `nr_miejsca` int(11) NOT NULL,
+  `id_typ_biletu` varchar(45) DEFAULT NULL,
   `kod_kreskowy` varchar(45) NOT NULL,
-  `czy_oplacony` varchar(45) NOT NULL DEFAULT '0',
+  `czy_oplacony` tinyint(1) NOT NULL DEFAULT '0',
   `pdf` varchar(45) DEFAULT NULL,
-  `Bilety_idBilet` int(11) NOT NULL,
-  `Wydarzenia_idWydarzenia` int(11) NOT NULL,
   PRIMARY KEY (`idBilet`),
-  KEY `fk_Bilety_Wydarzenia_idx` (`Wydarzenia_idWydarzenia`)
+  UNIQUE KEY `idBilet_UNIQUE` (`idBilet`),
+  KEY `fk_Bilety_Wydarzenia_idx` (`id_wydarzenia`),
+  KEY `fk_Bilety_Bilety_cena1_idx` (`id_cena`),
+  KEY `fk_Bilety_Klient1_idx` (`id_klient`),
+  KEY `fk_Bilety_Bilety_typ1_idx` (`id_typ_biletu`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -107,10 +135,15 @@ CREATE TABLE IF NOT EXISTS `bilety` (
 
 CREATE TABLE IF NOT EXISTS `bilety_cena` (
   `idBilety_cena` int(11) NOT NULL AUTO_INCREMENT,
-  `id_zlecenia` varchar(45) DEFAULT NULL,
-  `id_bilety_kategorie` varchar(45) DEFAULT NULL,
+  `id_wydarzenia` int(11) NOT NULL,
+  `id_bilety_kategoria` int(11) NOT NULL,
+  `id_bilety_typ` int(11) NOT NULL,
   `cena` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`idBilety_cena`)
+  PRIMARY KEY (`idBilety_cena`),
+  UNIQUE KEY `idBilety_cena_UNIQUE` (`idBilety_cena`),
+  KEY `fk_Bilety_cena_Wydarzenia1_idx` (`id_wydarzenia`),
+  KEY `fk_Bilety_cena_Bilety_kategorie1_idx` (`id_bilety_kategoria`),
+  KEY `fk_Bilety_cena_Bilety_typ1_idx` (`id_bilety_typ`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -120,10 +153,26 @@ CREATE TABLE IF NOT EXISTS `bilety_cena` (
 --
 
 CREATE TABLE IF NOT EXISTS `bilety_kategorie` (
-  `idBilety_kategorie` int(10) unsigned zerofill NOT NULL,
+  `idBilety_kategorie` int(11) NOT NULL AUTO_INCREMENT,
   `kategoria_cenowa` varchar(45) NOT NULL,
-  PRIMARY KEY (`idBilety_kategorie`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`idBilety_kategorie`),
+  UNIQUE KEY `kategoria_cenowa_UNIQUE` (`kategoria_cenowa`),
+  UNIQUE KEY `idBilety_kategorie_UNIQUE` (`idBilety_kategorie`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Struktura tabeli dla tabeli `bilety_typ`
+--
+
+CREATE TABLE IF NOT EXISTS `bilety_typ` (
+  `idBilety_typ` int(11) NOT NULL AUTO_INCREMENT,
+  `typ_biletu` varchar(45) NOT NULL,
+  PRIMARY KEY (`idBilety_typ`),
+  UNIQUE KEY `idBilety_typ_UNIQUE` (`idBilety_typ`),
+  UNIQUE KEY `typ_biletu_UNIQUE` (`typ_biletu`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -195,13 +244,15 @@ CREATE TABLE IF NOT EXISTS `klient` (
   `Imie` varchar(45) DEFAULT NULL,
   `Nazwisko` varchar(45) DEFAULT NULL,
   `email` varchar(45) NOT NULL,
-  `telefon` varchar(45) DEFAULT NULL,
+  `telefon` decimal(10,0) DEFAULT NULL,
   `miejscowosc` varchar(45) NOT NULL,
   `ulica` varchar(45) DEFAULT NULL,
   `nr_domu` varchar(45) NOT NULL,
   `nr_mieszkania` varchar(45) DEFAULT NULL,
-  `kod_pocztowy` varchar(45) NOT NULL,
-  PRIMARY KEY (`idKlient`)
+  `kod_pocztowy` decimal(5,0) NOT NULL,
+  PRIMARY KEY (`idKlient`),
+  UNIQUE KEY `idKlient_UNIQUE` (`idKlient`),
+  KEY `fk_Klient_Klient_uzytkownik1_idx` (`id_uzytkownika`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -211,16 +262,18 @@ CREATE TABLE IF NOT EXISTS `klient` (
 --
 
 CREATE TABLE IF NOT EXISTS `klient_uzytkownik` (
-  `id_pom_uzytkownik` int(11) NOT NULL AUTO_INCREMENT,
+  `id_uzytkownik` int(11) NOT NULL AUTO_INCREMENT,
   `uzytkownik` varchar(45) NOT NULL,
   `haslo` varchar(45) NOT NULL,
   `id_klienta` int(11) NOT NULL,
   `bledne_logowania` int(11) NOT NULL DEFAULT '0',
   `czy_zablokowane` int(11) NOT NULL DEFAULT '0',
-  `ostatnie_logowanie` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `ostatnie_logowanie` timestamp NULL DEFAULT NULL,
   `email` varchar(45) NOT NULL,
   `data_utworzenia` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id_pom_uzytkownik`)
+  PRIMARY KEY (`id_uzytkownik`),
+  UNIQUE KEY `uzytkownik_UNIQUE` (`uzytkownik`),
+  UNIQUE KEY `id_uzytkownik_UNIQUE` (`id_uzytkownik`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -231,19 +284,23 @@ CREATE TABLE IF NOT EXISTS `klient_uzytkownik` (
 
 CREATE TABLE IF NOT EXISTS `miejsce_wydarzenia` (
   `idMiejsce_wydarzenia` int(11) NOT NULL AUTO_INCREMENT,
-  `Nazwa` int(11) DEFAULT NULL,
-  `id_miejscowosc` varchar(45) DEFAULT NULL,
-  `Ulica` varchar(45) DEFAULT NULL,
+  `Nazwa` varchar(45) NOT NULL,
+  `id_miejscowosc` int(11) NOT NULL,
   `nr_domu` varchar(45) DEFAULT NULL,
-  `id_wojewodztwo` varchar(45) DEFAULT NULL,
+  `id_wojewodztwo` int(11) NOT NULL,
   `nr_lokalu` varchar(45) DEFAULT NULL,
-  `kod_pocztowy` varchar(45) DEFAULT NULL,
-  `pojemnosc` varchar(45) DEFAULT NULL,
-  `M_zwykle` varchar(45) DEFAULT NULL,
-  `M_VIP` varchar(45) DEFAULT NULL,
-  `dane_kontaktowe` varchar(45) DEFAULT NULL,
-  `opis` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`idMiejsce_wydarzenia`)
+  `kod_pocztowy` decimal(5,0) DEFAULT NULL,
+  `pojemnosc` decimal(6,0) NOT NULL,
+  `Ulica` varchar(45) DEFAULT NULL,
+  `M_zwykle` decimal(5,0) DEFAULT NULL,
+  `M_VIP` decimal(5,0) DEFAULT NULL,
+  `telefon` decimal(10,0) DEFAULT NULL,
+  `email` varchar(45) DEFAULT NULL,
+  `opis` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`idMiejsce_wydarzenia`),
+  UNIQUE KEY `idMiejsce_wydarzenia_UNIQUE` (`idMiejsce_wydarzenia`),
+  KEY `fk_Miejsce_wydarzenia_Wojewodztwa1_idx` (`id_wojewodztwo`),
+  KEY `fk_Miejsce_wydarzenia_Miejscowosci1_idx` (`id_miejscowosc`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -254,9 +311,11 @@ CREATE TABLE IF NOT EXISTS `miejsce_wydarzenia` (
 
 CREATE TABLE IF NOT EXISTS `miejscowosci` (
   `idMiejscowosci` int(11) NOT NULL AUTO_INCREMENT,
-  `id_wojewodztwo` varchar(45) DEFAULT NULL,
-  `miejscowosc` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`idMiejscowosci`)
+  `id_wojewodztwo` int(11) NOT NULL,
+  `miejscowosc` varchar(45) NOT NULL,
+  PRIMARY KEY (`idMiejscowosci`),
+  UNIQUE KEY `idMiejscowosci_UNIQUE` (`idMiejscowosci`),
+  KEY `fk_Miejscowosci_Wojewodztwa1_idx` (`id_wojewodztwo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -335,8 +394,10 @@ CREATE TABLE IF NOT EXISTS `vat` (
 
 CREATE TABLE IF NOT EXISTS `wojewodztwa` (
   `idWojewodztwa` int(11) NOT NULL,
-  `nazwa_woj` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`idWojewodztwa`)
+  `nazwa_woj` varchar(45) NOT NULL,
+  PRIMARY KEY (`idWojewodztwa`),
+  UNIQUE KEY `nazwa_woj_UNIQUE` (`nazwa_woj`),
+  UNIQUE KEY `idWojewodztwa_UNIQUE` (`idWojewodztwa`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -347,13 +408,17 @@ CREATE TABLE IF NOT EXISTS `wojewodztwa` (
 
 CREATE TABLE IF NOT EXISTS `wydarzenia` (
   `idWydarzenia` int(11) NOT NULL AUTO_INCREMENT,
-  `id_zleceniodawcy` varchar(45) DEFAULT NULL,
-  `id_pracownika` varchar(45) DEFAULT NULL,
-  `czy_oplacone w calosci` varchar(45) DEFAULT NULL,
-  `miejsce_wydarzenia` varchar(45) DEFAULT NULL,
-  `data_wydarzenia` varchar(45) DEFAULT NULL,
-  `id_miejscowosc` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`idWydarzenia`)
+  `id_zleceniodawcy` int(11) NOT NULL,
+  `id_pracownika` int(11) DEFAULT NULL,
+  `czy_oplacone w calosci` tinyint(1) NOT NULL DEFAULT '0',
+  `id_miejsce_wydarzenia` int(11) DEFAULT NULL,
+  `data_wydarzenia` datetime DEFAULT NULL,
+  `id_miejscowosc` int(11) NOT NULL,
+  PRIMARY KEY (`idWydarzenia`),
+  UNIQUE KEY `idWydarzenia_UNIQUE` (`idWydarzenia`),
+  KEY `fk_Wydarzenia_Zleceniodawca1_idx` (`id_zleceniodawcy`),
+  KEY `fk_Wydarzenia_Pracownik1_idx` (`id_pracownika`),
+  KEY `fk_Wydarzenia_Miejsce_wydarzenia1_idx` (`id_miejsce_wydarzenia`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -372,10 +437,63 @@ CREATE TABLE IF NOT EXISTS `zleceniodawca` (
 --
 
 --
+-- Ograniczenia dla tabeli `artysta`
+--
+ALTER TABLE `artysta`
+  ADD CONSTRAINT `fk_Artysta_Artysta_typ1` FOREIGN KEY (`id_zespol_typ`) REFERENCES `artysta_typ` (`idArtysta_typ`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Artysta_Artysta_podtyp1` FOREIGN KEY (`id_zespol_podtyp`) REFERENCES `artysta_podtyp` (`idArtysta_podtyp`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Artysta_Artysta_ranga1` FOREIGN KEY (`id_ranga`) REFERENCES `artysta_ranga` (`idArtysta_wielkosc`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Ograniczenia dla tabeli `artysta_has_wydarzenia`
+--
+ALTER TABLE `artysta_has_wydarzenia`
+  ADD CONSTRAINT `fk_Artysta_has_Wydarzenia_Artysta1` FOREIGN KEY (`Artysta_idArtysty`) REFERENCES `artysta` (`idArtysty`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Artysta_has_Wydarzenia_Wydarzenia1` FOREIGN KEY (`Wydarzenia_idWydarzenia`) REFERENCES `wydarzenia` (`idWydarzenia`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
 -- Ograniczenia dla tabeli `bilety`
 --
 ALTER TABLE `bilety`
-  ADD CONSTRAINT `fk_Bilety_Wydarzenia` FOREIGN KEY (`Wydarzenia_idWydarzenia`) REFERENCES `wydarzenia` (`idWydarzenia`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+  ADD CONSTRAINT `fk_Bilety_Wydarzenia` FOREIGN KEY (`id_wydarzenia`) REFERENCES `wydarzenia` (`idWydarzenia`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Bilety_Bilety_cena1` FOREIGN KEY (`id_cena`) REFERENCES `bilety_cena` (`idBilety_cena`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Bilety_Klient1` FOREIGN KEY (`id_klient`) REFERENCES `klient` (`idKlient`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Bilety_Bilety_typ1` FOREIGN KEY (`id_typ_biletu`) REFERENCES `bilety_typ` (`typ_biletu`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Ograniczenia dla tabeli `bilety_cena`
+--
+ALTER TABLE `bilety_cena`
+  ADD CONSTRAINT `fk_Bilety_cena_Wydarzenia1` FOREIGN KEY (`id_wydarzenia`) REFERENCES `wydarzenia` (`idWydarzenia`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Bilety_cena_Bilety_kategorie1` FOREIGN KEY (`id_bilety_kategoria`) REFERENCES `bilety_kategorie` (`idBilety_kategorie`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Bilety_cena_Bilety_typ1` FOREIGN KEY (`id_bilety_typ`) REFERENCES `bilety_typ` (`idBilety_typ`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Ograniczenia dla tabeli `klient`
+--
+ALTER TABLE `klient`
+  ADD CONSTRAINT `fk_Klient_Klient_uzytkownik1` FOREIGN KEY (`id_uzytkownika`) REFERENCES `klient_uzytkownik` (`id_uzytkownik`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Ograniczenia dla tabeli `miejsce_wydarzenia`
+--
+ALTER TABLE `miejsce_wydarzenia`
+  ADD CONSTRAINT `fk_Miejsce_wydarzenia_Wojewodztwa1` FOREIGN KEY (`id_wojewodztwo`) REFERENCES `wojewodztwa` (`idWojewodztwa`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Miejsce_wydarzenia_Miejscowosci1` FOREIGN KEY (`id_miejscowosc`) REFERENCES `miejscowosci` (`idMiejscowosci`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Ograniczenia dla tabeli `miejscowosci`
+--
+ALTER TABLE `miejscowosci`
+  ADD CONSTRAINT `fk_Miejscowosci_Wojewodztwa1` FOREIGN KEY (`id_wojewodztwo`) REFERENCES `wojewodztwa` (`idWojewodztwa`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Ograniczenia dla tabeli `wydarzenia`
+--
+ALTER TABLE `wydarzenia`
+  ADD CONSTRAINT `fk_Wydarzenia_Zleceniodawca1` FOREIGN KEY (`id_zleceniodawcy`) REFERENCES `zleceniodawca` (`idZleceniodawca`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Wydarzenia_Pracownik1` FOREIGN KEY (`id_pracownika`) REFERENCES `pracownik` (`idPracownik`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Wydarzenia_Miejsce_wydarzenia1` FOREIGN KEY (`id_miejsce_wydarzenia`) REFERENCES `miejsce_wydarzenia` (`idMiejsce_wydarzenia`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
